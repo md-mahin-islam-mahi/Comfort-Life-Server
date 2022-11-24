@@ -19,12 +19,21 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 async function run() {
     try {
         const userCollection = client.db("comfortLife").collection("users");
+        const furnitureItems = client.db("comfortLife").collection("furnitureItems");
+
+
         app.post("/users" , async (req, res) => {
             const users = req.body;
             console.log(users);
             const result = await userCollection.insertOne(users);
             res.send(result)
-        })
+        });
+
+        app.get("/furniture-items", async (req, res) => {
+            const query = {};
+            const furnitures = await furnitureItems.find(query).toArray();
+            res.send(furnitures);
+        });
 
     }
     finally {
