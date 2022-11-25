@@ -19,9 +19,10 @@ async function run() {
     try {
         const userCollection = client.db("comfortLife").collection("users");
         const furnitureItems = client.db("comfortLife").collection("furnitureItems");
+        const furnitureCategories = client.db("comfortLife").collection("categories");
 
         // users
-        app.post("/users" , async (req, res) => {
+        app.post("/users", async (req, res) => {
             const users = req.body;
             console.log(users);
             const result = await userCollection.insertOne(users);
@@ -40,6 +41,29 @@ async function run() {
             const user = await userCollection.findOne(query);
             res.send(user);
         });
+
+        // furniture categories
+        app.get("/categories", async (req, res) => {
+            const query = {};
+            const categories = await furnitureCategories.find(query).toArray();
+            res.send(categories);
+        });
+
+        // find category through id
+        app.get("/category/:name", async (req, res) => {
+            const name = req.params.name;
+            const query = { category: name };
+            const result = await furnitureCategories.findOne(query);
+            res.send(result);
+        })
+
+        // find products thorough category name
+        app.get("/item/:name", async (req, res) => {
+            const name = req.params.name;
+            const query = { productName: name };
+            const result = await furnitureItems.find(query).toArray();
+            res.send(result);
+        })
 
         // furnitureItems
         app.get("/furniture", async (req, res) => {
@@ -61,19 +85,6 @@ async function run() {
             const result = await furnitureItems.insertOne(furniture);
             return res.send(result);
         })
-
-        app.put("/furniture", async (req, res) => {
-            const furniture = req.body;
-            const query = {};
-            const options = { upsert: true };
-            const updateDoc = {
-                $set: {
-                    furniture: furniture
-                }
-            }
-            const result = await furnitureItems.updateMany(query, updateDoc, options);
-            res.send(result);
-        });
     }
     finally {
 

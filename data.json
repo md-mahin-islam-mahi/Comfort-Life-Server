@@ -1,0 +1,32 @@
+[
+    {
+        "category": "Bed",
+        "categoryId": 1,
+        "imageURL": "https://i.ibb.co/bQx7kLm/bed.jpg"
+    },
+    {
+        "category": "Sofa",
+        "categoryId": 2,
+        "imageURL": "https://i.ibb.co/5kHbr1w/sofa.jpg"
+    },
+    {
+        "category": "Dressing Table",
+        "categoryId": 3,
+        "imageURL": "https://i.ibb.co/Mh50WFc/dressing-table.jpg"
+    },
+    {
+        "category": "Cupboard",
+        "categoryId": 4,
+        "imageURL": "https://i.ibb.co/jwnZpvY/cupboard.jpg"
+    },
+    {
+        "category": "Table",
+        "categoryId": 5,
+        "imageURL": "https://i.ibb.co/1L35qJ6/table.jpg"
+    },
+    {
+        "category": "Chair",
+        "categoryId": 6,
+        "imageURL": "https://i.ibb.co/16KkjbK/chair.jpg"
+    }
+]
