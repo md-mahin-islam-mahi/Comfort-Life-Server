@@ -18,13 +18,12 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 async function run() {
     try {
         const userCollection = client.db("comfortLife").collection("users");
-        const furnitureItems = client.db("comfortLife").collection("furnitureItems");
+        const allFurniture = client.db("comfortLife").collection("furnitureItems");
         const furnitureCategories = client.db("comfortLife").collection("categories");
 
         // users
         app.post("/users", async (req, res) => {
             const users = req.body;
-            console.log(users);
             const result = await userCollection.insertOne(users);
             res.send(result)
         });
@@ -61,28 +60,30 @@ async function run() {
         app.get("/item/:name", async (req, res) => {
             const name = req.params.name;
             const query = { productName: name };
-            const result = await furnitureItems.find(query).toArray();
+            const result = await allFurniture.find(query).toArray();
+            res.send(result);
+        })
+
+        // find product thorough email address
+        app.get("/item/:email", async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email };
+            const result = await allFurniture.find(query).toArray();
             res.send(result);
         })
 
         // furnitureItems
-        app.get("/furniture", async (req, res) => {
-            const query = {};
-            const furnitures = await furnitureItems.find(query).toArray();
+        app.get("/furniture/:email", async (req, res) => {
+            const email = req.params.email;
+            const query = {email: email};
+            const furnitures = await allFurniture.find(query).toArray();
             res.send(furnitures);
-        });
-
-        app.get(`/furniture/:id`, async (req, res) => {
-            const id = req.params.id;
-            const query = { _id: ObjectId(id) };
-            const furniture = await furnitureItems.findOne(query);
-            res.send(furniture);
         });
 
         // add furnitur
         app.post("/furniture", async (req, res) => {
             const furniture = req.body;
-            const result = await furnitureItems.insertOne(furniture);
+            const result = await allFurniture.insertOne(furniture);
             return res.send(result);
         })
     }
