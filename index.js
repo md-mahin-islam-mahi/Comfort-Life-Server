@@ -13,12 +13,28 @@ app.get('/', (req, res) => {
     res.send("Comfore Life server is running")
 });
 
+// json web token methods...
 app.post('/jwt', (req, res) => {
     const user = req.body;
-    const token =  jwt.sign(user, process.env.JSON_WEB_TOKEN, {expiresIn: "10h"});
-    console.log(token);
-    res.send({token});
+    const token = jwt.sign(user, process.env.JSON_WEB_TOKEN, { expiresIn: "10h" });
+    res.send({ token });
 });
+
+function verifyJWT(req, res, next) {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+        res.status(401).send({ message: "Unauthorizes access" })
+    }
+    const token = authHeader.split(" ")[1];
+    jwt.verify(token, process.env.JSON_WEB_TOKEN, function (err, decoded) {
+        if (err) {
+            res.status(401).send({ meaasge: "Unauthorizes access" })
+        }
+        req.decoded = decoded;
+
+    });
+    next()
+};
 
 // mongoDB 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.4lqljgn.mongodb.net/?retryWrites=true&w=majority`;
@@ -29,6 +45,7 @@ async function run() {
         const allFurniture = client.db("comfortLife").collection("furnitureItems");
         const furnitureCategories = client.db("comfortLife").collection("categories");
         const orderCollection = client.db("comfortLife").collection("orders");
+        const paidFurnitures = client.db("comfortLife").collection("paid");
 
         // users
         app.post("/users", async (req, res) => {
@@ -149,6 +166,22 @@ async function run() {
             res.send(result);
         });
 
+        // delete furnitur from orders
+        app.delete("/furniture/:id", async (req, res) => {
+            const id = req.params.id;
+            const query = { previousId: id };
+            const result = await orderCollection.deleteOne(query);
+            res.send(result);
+        });
+
+        // deleting after payment
+        app.delete("/furniture-delete/:id", async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await allFurniture.deleteOne(query);
+            res.send(result);
+        });
+
         // add orders
         app.post("/orders", async (req, res) => {
             const order = req.body;
@@ -157,8 +190,12 @@ async function run() {
         });
 
         // get orders collection by email
-        app.get("/orders", async (req, res) => {
+        app.get("/orders", verifyJWT, async (req, res) => {
+            const decoded = req.decoded
             const email = req.query.email;
+            if (decoded.email !== email) {
+                return res.status(401).send({ error: "Email not match" });
+            }
             const query = { buyerEmail: email };
             const orders = await orderCollection.find(query).toArray();
             res.send(orders);
@@ -185,7 +222,30 @@ async function run() {
             }
             const paid = await allFurniture.updateOne(query, updateDock, options);
             res.send(paid);
-        })
+        });
+
+        // paid furnitures
+        app.post("/paid", async (req, res) => {
+            const furniture = req.body;
+            const result = await paidFurnitures.insertOne(furniture);
+            res.send(result);
+        });
+
+        // paid furnitures
+        app.get("/paid/:email", async (req, res) => {
+            const email = req.params.email;
+            const query = { buyerEmail: email }
+            const result = await paidFurnitures.find(query).toArray();
+            res.send(result);
+        });
+
+        // delete from paid items
+        app.delete("/paid/:id", async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: id }
+            const result = await paidFurnitures.deleteOne(query);
+            res.send(result);
+        });
     }
     finally {
 
