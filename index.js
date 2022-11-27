@@ -68,6 +68,20 @@ async function run() {
             res.send(users);
         });
 
+        //verify user
+        app.put("/users/:id", async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const options = { upsert: true };
+            const updateDock = {
+                $set: {
+                    identity: 'varified',
+                }
+            }
+            const users = await userCollection.updateOne(query, updateDock, options);
+            res.send(users);
+        });
+
         // get users by type
         app.get("/users-type/:type", async (req, res) => {
             const type = req.params.type;
