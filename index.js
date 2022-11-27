@@ -75,7 +75,7 @@ async function run() {
             const options = { upsert: true };
             const updateDock = {
                 $set: {
-                    identity: 'varified',
+                    isVarified: true,
                 }
             }
             const users = await userCollection.updateOne(query, updateDock, options);
@@ -145,8 +145,8 @@ async function run() {
         });
 
         // get furniture by availability
-        app.get("/furniture-available", async (req, res) => {
-            const query = { isAvailable: "true" };
+        app.get("/furniture-available/", async (req, res) => {
+            const query = { advertise: "true" };
             const furnitures = await allFurniture.find(query).toArray();
             res.send(furnitures);
         });
@@ -158,7 +158,7 @@ async function run() {
             const options = { upsert: true };
             const updateDock = {
                 $set: {
-                    isAvailable: 'true',
+                    advertise: 'true',
                 }
             }
             const furnitures = await allFurniture.updateOne(query, updateDock, options);
@@ -168,7 +168,7 @@ async function run() {
         // furnitureItems
         app.get("/furniture/:email", async (req, res) => {
             const email = req.params.email;
-            const query = { email: email };
+            const query = { sellerEmail: email };
             const furnitures = await allFurniture.find(query).toArray();
             res.send(furnitures);
         });
