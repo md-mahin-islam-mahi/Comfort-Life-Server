@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
+const stripe = require('stripe')("sk_test_51M8xMRKIjmtvfC7hvcJhsZ46jykaVPek8Yvam12cJAGcQKlJMu0hXE7QnqfKE6hR7MeFnRFV4OnsSMyXzH2dJ0L000k7uYry0z");
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
 const port = process.env.PORT || 5000;
@@ -35,6 +36,8 @@ function verifyJWT(req, res, next) {
     });
     next()
 };
+
+
 
 // mongoDB 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.4lqljgn.mongodb.net/?retryWrites=true&w=majority`;
@@ -165,6 +168,20 @@ async function run() {
             res.send(furnitures);
         });
 
+
+        app.put("/furniture-update/:id", async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const options = { upsert: true };
+            const updateDock = {
+                $set: {
+                    advertise: 'false',
+                }
+            }
+            const furnitures = await allFurniture.updateOne(query, updateDock, options);
+            res.send(furnitures);
+        });
+
         // furnitureItems
         app.get("/furniture/:email", async (req, res) => {
             const email = req.params.email;
@@ -181,18 +198,32 @@ async function run() {
         });
 
         // delete furnitur from orders
-        app.delete("/furniture/:id", async (req, res) => {
+        app.put("/order/:id", async (req, res) => {
             const id = req.params.id;
             const query = { previousId: id };
-            const result = await orderCollection.deleteOne(query);
+            const options = { upsert: true };
+            const updateDock = {
+                $set: {
+                    payment: 'true',
+                    isAvailable: 'false'
+                }
+            }
+            const result = await orderCollection.updateOne(query, updateDock, options);
             res.send(result);
         });
 
-        // deleting after payment
-        app.delete("/furniture-delete/:id", async (req, res) => {
+        // after payment
+        app.patch("/paid/:id", async (req, res) => {
             const id = req.params.id;
-            const query = { _id: ObjectId(id) };
-            const result = await allFurniture.deleteOne(query);
+            const query = { _id:ObjectId(id) };
+            // const options = { upsert: true };
+            const updateDock = {
+                $set: {
+                    payment: 'true',
+                    isAvailable: 'false'
+                }
+            }
+            const result = await allFurniture.updateOne(query, updateDock);
             res.send(result);
         });
 
@@ -259,6 +290,23 @@ async function run() {
             const query = { _id: id }
             const result = await paidFurnitures.deleteOne(query);
             res.send(result);
+        });
+
+        // stripe methods...
+        app.post("/payment-intent", async (req, res) => {
+            const price = req.body.price;
+            const amount = price * 100;
+
+            const paymentIntent = await stripe.paymentIntents.create({
+                currency: 'usd',
+                amount: amount,
+                "payment_method_types": [
+                    'card'
+                ],
+            });
+            res.send({
+                clientSecret: paymentIntent.client_secret
+            })
         });
     }
     finally {
